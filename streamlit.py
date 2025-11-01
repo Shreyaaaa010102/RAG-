@@ -3,10 +3,10 @@ import requests
 import uuid  # For generating unique session IDs
 
 # Replace with your n8n webhook URL
-WEBHOOK_URL = "https://project-path.app.n8n.cloud/webhook/fafe6e52-f3f2-47d0-9875-e77773da33ed/chat"
+WEBHOOK_URL = "https://amerjahmi.app.n8n.cloud/webhook/d6d1691e-cbbe-4df9-aa67-c62a0be585d5/chat"
 
 # Hardcoded password (change this; for production, use st.secrets or env vars)
-PASSWORD = "123456"
+PASSWORD = "Master"
 
 # Custom CSS for Grok-like styling with dark blue theme
 st.markdown("""
@@ -123,15 +123,22 @@ if "messages" not in st.session_state:
 # Function to send message to n8n webhook and get response
 def send_message_to_n8n(user_message, session_id):
     payload = {
-        "text": user_message,
-        "sessionId": session_id  # n8n uses this for memory
+        "chatInput": user_message,   # must match n8n Chat Trigger key
+        "sessionId": session_id
     }
-    try:
-        response = requests.post(WEBHOOK_URL, json=payload)
-        response.raise_for_status()  # Raise error if not 200 OK
-        return response.json().get("output", "No response from chatbot")  # Assuming n8n returns JSON with 'output' key
-    except requests.exceptions.RequestException as e:
-        return f"Error connecting to chatbot: {str(e)}"
+    headers = {"Content-Type": "application/json"}
+    for attempt in range(3):
+        try:
+            response = requests.post(WEBHOOK_URL, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            # Adjust to whatever key n8n returns ("output", "response", etc.)
+            return data.get("output") or data.get("response") or str(data)
+        except requests.exceptions.RequestException as e:
+            if attempt < 2:
+                continue
+            return f"⚠️ Error connecting to chatbot: {str(e)}"
+
 
 # Password protection
 if not st.session_state.authenticated:
