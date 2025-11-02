@@ -1,111 +1,171 @@
 import streamlit as st
 import requests
-import uuid  # For generating unique session IDs
+import uuid
+from datetime import datetime
 
 # Replace with your n8n webhook URL
 WEBHOOK_URL = "https://amerjahmi.app.n8n.cloud/webhook/d6d1691e-cbbe-4df9-aa67-c62a0be585d5/chat"
 
-# Hardcoded password (change this; for production, use st.secrets or env vars)
+# Hardcoded password
 PASSWORD = "Master"
 
-# Custom CSS for Grok-like styling with dark blue theme
+# Custom CSS for iMessage-like styling
 st.markdown("""
     <style>
-    /* General chat container */
+    /* General app background */
     .stApp {
-        background-color: #0a192f;  /* Dark blue background */
-        color: white;  /* Default text color white for contrast */
+        background-color: #0a192f;
     }
-    /* Headings and titles */
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Headings */
+    .stApp h1 {
         color: white !important;
-        text-align: center;  /* Center all titles */
+        text-align: center;
+        font-weight: 600;
+        padding: 1rem 0;
     }
-    /* Labels for inputs */
-    .stApp .stTextInput label, .stApp .stButton label {
-        color: white !important;  /* White labels for high contrast */
+    
+    /* Chat messages container */
+    .stChatMessage {
+        background-color: transparent !important;
+        padding: 0.5rem 1rem !important;
     }
-    /* Message bubbles */
-    .stApp .st-chat-message {
-        border-radius: 15px;
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        max-width: 80%;
-        color: white;  /* White text for messages */
+    
+    /* User messages - RIGHT aligned with BLUE background */
+    [data-testid="stChatMessageContent"][data-testid*="user"] {
+        background-color: #007bff !important;
+        color: white !important;
+        border-radius: 18px !important;
+        padding: 10px 16px !important;
+        max-width: 70% !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        word-wrap: break-word;
     }
-    /* User messages: right-aligned, blue bubble */
-    .stApp div[data-testid="column"] > div > div > div > div > .st-chat-message.user {
-        background-color: #007bff;  /* Blue bubble */
-        color: white;
-        margin-left: auto;
+    
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageContent"]) {
+        display: flex !important;
+        justify-content: flex-end !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* Target user message specifically */
+    div[data-testid="stChatMessage"]:has(.user-message) {
+        justify-content: flex-end !important;
+    }
+    
+    div[data-testid="stChatMessage"]:has(.assistant-message) {
+        justify-content: flex-start !important;
+    }
+    
+    /* Assistant messages - LEFT aligned with GRAY background */
+    .assistant-message {
+        background-color: #2d3748 !important;
+        color: white !important;
+        border-radius: 18px !important;
+        padding: 10px 16px !important;
+        max-width: 70% !important;
+        margin-right: auto !important;
+        margin-left: 0 !important;
+        display: inline-block;
+        word-wrap: break-word;
+    }
+    
+    .user-message {
+        background-color: #007bff !important;
+        color: white !important;
+        border-radius: 18px !important;
+        padding: 10px 16px !important;
+        max-width: 70% !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        display: inline-block;
+        word-wrap: break-word;
         text-align: right;
     }
-    /* Assistant messages: left-aligned, darker bubble */
-    .stApp div[data-testid="column"] > div > div > div > div > .st-chat-message.assistant {
-        background-color: #2d3748;  /* Dark gray for assistant */
-        color: white;
-        margin-right: auto;
-        text-align: left;
+    
+    /* Hide avatars */
+    .stChatMessage img {
+        display: none !important;
     }
-    /* Avatars */
-    .stApp .st-chat-message .st-avatar {
-        border-radius: 50%;
+    
+    /* Date divider */
+    .date-divider {
+        text-align: center;
+        color: #8892a6;
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin: 1.5rem 0 1rem 0;
+        text-transform: uppercase;
     }
-    /* Input area for password */
-    .stApp .stTextInput > div > div > input {
-        border-radius: 20px;
-        padding: 10px;
-        background-color: #1a202c;  /* Dark input background for password */
-        color: white;  /* White text in input */
-        border: 1px solid #4a5568;  /* Subtle border */
+    
+    /* Input area */
+    .stChatInputContainer {
+        background-color: #1a202c !important;
+        border-top: 1px solid #2d3748 !important;
+        padding: 1rem !important;
     }
-    /* Buttons: clear and prominent */
-    .stApp .stButton > button {
-        background-color: #007bff;  /* Blue buttons */
+    
+    .stChatInput textarea {
+        background-color: #2d3748 !important;
+        color: white !important;
+        border: 1px solid #4a5568 !important;
+        border-radius: 20px !important;
+        padding: 10px 15px !important;
+    }
+    
+    .stChatInput textarea::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        background-color: #007bff;
         color: white;
         border-radius: 20px;
         border: none;
-        padding: 10px 20px;
-        font-weight: bold;  /* Bold text for clarity */
+        padding: 8px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
     }
-    .stApp .stButton > button:hover {
-        background-color: #0056b3;  /* Darker blue on hover for interactivity */
-        cursor: pointer;
+    
+    .stButton > button:hover {
+        background-color: #0056b3;
+        transform: translateY(-1px);
     }
-    /* Spinner */
-    .stApp .stSpinner {
-        text-align: center;
+    
+    /* Login form */
+    .stTextInput > div > div > input {
+        background-color: #1a202c;
         color: white;
+        border: 1px solid #4a5568;
+        border-radius: 10px;
+        padding: 10px;
     }
-    /* Ensure all text is clear within the app */
-    .stApp p, .stApp div, .stApp span, .stApp label {
-        color: white !important;  /* Override for high contrast within app */
-    }
-    /* Attempt to style the top toolbar */
-    section[data-testid="stToolbar"] {
-        background-color: #007bff !important;  /* Blue background for toolbar */
-    }
-    header[data-testid="stHeader"] {
-        background-color: #007bff !important;  /* Blue for any header */
-    }
-    /* Style the bottom chat input bar */
-    div.stChatFloatingInputContainer {
-        background-color: #007bff !important;
-        padding-bottom: 3rem !important;
-        border-top: 1px solid #0056b3 !important;
-    }
-    div.stChatInput > div > div > input {
-        background-color: #007bff !important;
+    
+    .stTextInput label {
         color: white !important;
-        border: none !important;
     }
-    div.stChatInput > div > div > input::placeholder {
-        color: rgba(255, 255, 255, 0.6) !important;
+    
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #007bff !important;
     }
-    /* Send button in chat input */
-    div.stChatInput > div > div > button {
-        background-color: #007bff !important;
-        color: white !important;
+    
+    .stSpinner {
+    color: white !important;
+    }       
+    /* Clear button positioning */
+    .clear-button-container {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 999;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -113,17 +173,17 @@ st.markdown("""
 # Initialize session state
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-
 if "session_id" not in st.session_state:
-    st.session_state.session_id = str(uuid.uuid4())  # Generate unique ID once per session
-
+    st.session_state.session_id = str(uuid.uuid4())
 if "messages" not in st.session_state:
-    st.session_state.messages = []  # List to store chat history
+    st.session_state.messages = []
+if "show_date" not in st.session_state:
+    st.session_state.show_date = True
 
-# Function to send message to n8n webhook and get response
+# Function to send message to n8n webhook
 def send_message_to_n8n(user_message, session_id):
     payload = {
-        "chatInput": user_message,   # must match n8n Chat Trigger key
+        "chatInput": user_message,
         "sessionId": session_id
     }
     headers = {"Content-Type": "application/json"}
@@ -132,53 +192,68 @@ def send_message_to_n8n(user_message, session_id):
             response = requests.post(WEBHOOK_URL, json=payload, headers=headers, timeout=30)
             response.raise_for_status()
             data = response.json()
-            # Adjust to whatever key n8n returns ("output", "response", etc.)
             return data.get("output") or data.get("response") or str(data)
         except requests.exceptions.RequestException as e:
             if attempt < 2:
                 continue
             return f"⚠️ Error connecting to chatbot: {str(e)}"
 
-
 # Password protection
 if not st.session_state.authenticated:
-    st.markdown('<h1 style="color:white; text-align:center;">Login to Chatbot</h1>', unsafe_allow_html=True)
-    password_input = st.text_input("Enter Password", type="password")
-    if st.button("Login"):
-        if password_input == PASSWORD:
-            st.session_state.authenticated = True
-            st.rerun()  # Refresh to show chat
-        else:
-            st.error("Incorrect password")
+    st.markdown('<h1>🔐 Login to Assistant</h1>', unsafe_allow_html=True)
+    with st.form(key="login_form"):
+        password_input = st.text_input("Enter Password", type="password")
+        submit = st.form_submit_button("Login")
+        if submit:
+            if password_input == PASSWORD:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("❌ Incorrect password")
 else:
-    # Streamlit app layout (Grok-like chat)
-    st.markdown('<h1 style="color:white; text-align:center;">RAG Chatbot</h1>', unsafe_allow_html=True)  # Centered title
-
-    # Clear chat button (Grok has reset options)
-    if st.button("Clear Chat"):
-        st.session_state.messages = []
-        st.session_state.session_id = str(uuid.uuid4())  # New session
-        st.rerun()
-
-    # Display chat history with avatars
+    # Main chat interface
+    col1, col2, col3 = st.columns([1, 6, 1])
+    
+    with col2:
+        st.markdown('<h1>💬 RAG Assistant</h1>', unsafe_allow_html=True)
+    
+    with col3:
+        if st.button("🔄 Clear"):
+            st.session_state.messages = []
+            st.session_state.session_id = str(uuid.uuid4())
+            st.session_state.show_date = True
+            st.rerun()
+    
+    # Date divider
+    if st.session_state.show_date and len(st.session_state.messages) > 0:
+        st.markdown(f'<div class="date-divider">{datetime.now().strftime("%A").upper()}</div>', unsafe_allow_html=True)
+        st.session_state.show_date = False
+    
+    # Display chat history
     for message in st.session_state.messages:
-        avatar = "🧑‍💻" if message["role"] == "user" else "🤖"  # Simple emojis; use URLs for images
-        # For Grok logo: avatar = "https://example.com/grok-icon.png" for assistant
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
-
+        if message["role"] == "user":
+            # User message - RIGHT aligned
+            st.markdown(f'<div style="display: flex; justify-content: flex-end; margin-bottom: 8px;"><div class="user-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+        else:
+            # Assistant message - LEFT aligned
+            st.markdown(f'<div style="display: flex; justify-content: flex-start; margin-bottom: 8px;"><div class="assistant-message">{message["content"]}</div></div>', unsafe_allow_html=True)
+    
     # User input
-    if prompt := st.chat_input("Ask me anything..."):  # Grok-like placeholder
-        # Append user message to history
+    if prompt := st.chat_input("Message..."):
+        # Add date divider if first message
+        if len(st.session_state.messages) == 0:
+            st.markdown(f'<div class="date-divider">{datetime.now().strftime("%A").upper()}</div>', unsafe_allow_html=True)
+        
+        # Append user message
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user", avatar="🧑‍💻"):
-            st.markdown(prompt)
-
-        # Send to n8n and get response
-        with st.chat_message("assistant", avatar="🤖"):
-            with st.spinner("Thinking..."):
-                bot_response = send_message_to_n8n(prompt, st.session_state.session_id)
-            st.markdown(bot_response)
-
-        # Append bot response to history
+        
+        # Display user message immediately
+        st.markdown(f'<div style="display: flex; justify-content: flex-end; margin-bottom: 8px;"><div class="user-message">{prompt}</div></div>', unsafe_allow_html=True)
+        
+        # Get bot response
+        with st.spinner("Extracting Data..."):
+            bot_response = send_message_to_n8n(prompt, st.session_state.session_id)
+        
+        # Append and display bot response
         st.session_state.messages.append({"role": "assistant", "content": bot_response})
+        st.rerun()
