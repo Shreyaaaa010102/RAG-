@@ -21,6 +21,11 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
+    /* Hide default header */
+    header[data-testid="stHeader"] {
+        background-color: #0a192f !important;
+    }
+    
     /* Headings */
     .stApp h1 {
         color: white !important;
@@ -68,7 +73,9 @@ st.markdown("""
         color: white !important;
         border-radius: 18px !important;
         padding: 10px 16px !important;
-        max-width: 70% !important;
+        max-width: 50% !important;
+        min-width: fit-content !important;
+        width: auto !important;
         margin-right: auto !important;
         margin-left: 0 !important;
         display: inline-block;
@@ -80,12 +87,14 @@ st.markdown("""
         color: white !important;
         border-radius: 18px !important;
         padding: 10px 16px !important;
-        max-width: 70% !important;
+        max-width: 50% !important;
+        min-width: fit-content !important;
+        width: auto !important;
         margin-left: auto !important;
         margin-right: 0 !important;
         display: inline-block;
         word-wrap: break-word;
-        text-align: right;
+        text-align: left;
     }
     
     /* Hide avatars */
@@ -104,23 +113,73 @@ st.markdown("""
         text-transform: uppercase;
     }
     
-    /* Input area */
+    /* Input area - FIXED WIDTH AND CURSOR */
     .stChatInputContainer {
         background-color: #1a202c !important;
         border-top: 1px solid #2d3748 !important;
-        padding: 1rem !important;
+        padding: 1rem 0 !important;
+        margin: 0 !important;
+    }
+    
+    .stChatInput {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 1rem !important;
+    }
+    
+    .stChatInput > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .stChatInput > div > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
     
     .stChatInput textarea {
         background-color: #2d3748 !important;
         color: white !important;
+        caret-color: white !important;
         border: 1px solid #4a5568 !important;
         border-radius: 20px !important;
         padding: 10px 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
     
     .stChatInput textarea::placeholder {
         color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    .stChatInput textarea:focus {
+        border-color: #007bff !important;
+        outline: none !important;
+        box-shadow: 0 0 0 1px #007bff !important;
+    }
+    
+    /* Send button styling */
+    .stChatInput button {
+        background-color: transparent !important;
+        color: white !important;
+        border: none !important;
+        position: absolute !important;
+        right: 1.5rem !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        padding: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .stChatInput button:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border-radius: 50% !important;
     }
     
     /* Buttons */
@@ -139,17 +198,64 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* Login form */
+    /* Login form - FIX PASSWORD INPUT */
     .stTextInput > div > div > input {
-        background-color: #1a202c;
-        color: white;
-        border: 1px solid #4a5568;
-        border-radius: 10px;
-        padding: 10px;
+        background-color: #2d3748 !important;
+        color: white !important;
+        caret-color: white !important;
+        border: 1px solid #4a5568 !important;
+        border-radius: 10px !important;
+        padding: 10px 15px !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder {
+        color: transparent !important;
+        opacity: 0 !important;
+    }
+    
+    .stTextInput > div > div > input::-webkit-input-placeholder {
+        color: transparent !important;
+        opacity: 0 !important;
+    }
+    
+    .stTextInput > div > div > input::-moz-placeholder {
+        color: transparent !important;
+        opacity: 0 !important;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #007bff !important;
+        outline: none !important;
+        box-shadow: 0 0 0 1px #007bff !important;
     }
     
     .stTextInput label {
         color: white !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Hide any background text in password field */
+    .stTextInput > div > div > input[type="password"] {
+        -webkit-text-security: disc !important;
+    }
+    
+    /* Form styling */
+    .stForm {
+        background-color: transparent !important;
+        border: none !important;
+    }
+    
+    /* Hide the "Press Enter to submit form" text */
+    .stForm [data-testid="InputInstructions"] {
+        display: none !important;
+    }
+    
+    .stForm small {
+        display: none !important;
+    }
+    
+    div[data-baseweb="form-control"] > div:last-child {
+        display: none !important;
     }
     
     /* Spinner */
@@ -158,14 +264,29 @@ st.markdown("""
     }
     
     .stSpinner {
-    color: white !important;
-    }       
+        color: white !important;
+    }
+    
     /* Clear button positioning */
     .clear-button-container {
         position: absolute;
         top: 1rem;
         right: 1rem;
         z-index: 999;
+    }
+    
+    /* Fix any stray text visibility issues */
+    div[data-baseweb="base-input"] {
+        background-color: transparent !important;
+    }
+    
+    /* Ensure no background text shows through */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+        -webkit-text-fill-color: white !important;
+        -webkit-box-shadow: 0 0 0px 1000px #2d3748 inset !important;
+        transition: background-color 5000s ease-in-out 0s;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -202,7 +323,7 @@ def send_message_to_n8n(user_message, session_id):
 if not st.session_state.authenticated:
     st.markdown('<h1>🔐 Login to Assistant</h1>', unsafe_allow_html=True)
     with st.form(key="login_form"):
-        password_input = st.text_input("Enter Password", type="password")
+        password_input = st.text_input("Enter Password", type="password", key="password_field", placeholder="")
         submit = st.form_submit_button("Login")
         if submit:
             if password_input == PASSWORD:
@@ -215,7 +336,7 @@ else:
     col1, col2, col3 = st.columns([1, 6, 1])
     
     with col2:
-        st.markdown('<h1>💬 RAG Assistant</h1>', unsafe_allow_html=True)
+        st.markdown('<h1>💬 Assistant</h1>', unsafe_allow_html=True)
     
     with col3:
         if st.button("🔄 Clear"):
