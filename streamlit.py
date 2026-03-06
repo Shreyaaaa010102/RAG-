@@ -4,10 +4,10 @@ import uuid
 from datetime import datetime
 
 # Replace with your n8n webhook URL
-WEBHOOK_URL = "https://amerjahmi.app.n8n.cloud/webhook/d6d1691e-cbbe-4df9-aa67-c62a0be585d5/chat"
+WEBHOOK_URL = "https://user.app.n8n.cloud/webhook/d6d1691e-cbbe-4df9-aa67-xxxxxxxxxx/chat"
 
 # Hardcoded password
-PASSWORD = "Master"
+PASSWORD = ""
 
 # Custom CSS for iMessage-like styling
 st.markdown("""
@@ -378,3 +378,4 @@ else:
         # Append and display bot response
         st.session_state.messages.append({"role": "assistant", "content": bot_response})
         st.rerun()
+
